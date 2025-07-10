@@ -22,7 +22,7 @@
         
         .container {
             width: 100vw;
-            height: calc(100vh - 60px);
+            height: calc(100vh - 90px);
             display: flex;
             flex-direction: column;
         }
@@ -84,44 +84,6 @@
             overflow: hidden;
         }
         
-        .fullscreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #222;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        
-        .fullscreen .canvas-container {
-            width: 80vw !important;
-            height: 60vh !important;
-            margin: 20px auto;
-        }
-        
-        .fullscreen .timer {
-            font-size: 48px;
-            margin: 20px 0;
-        }
-        
-        .fullscreen .result {
-            font-size: 28px;
-            margin: 15px 0;
-        }
-        
-        .fullscreen button {
-            padding: 12px 24px;
-            font-size: 18px;
-            margin: 0 8px;
-        }
-        
         .dot {
             position: absolute;
             width: 60px;
@@ -135,12 +97,6 @@
             font-weight: bold;
             color: white;
             transition: background-color 0.1s;
-        }
-        
-        .fullscreen .dot {
-            width: 80px;
-            height: 80px;
-            font-size: 40px;
         }
         
         .dot.signal {
@@ -179,13 +135,6 @@
             background-color: #3b6;
         }
         
-        .fullscreen-btn {
-            background-color: #b25;
-        }
-        
-        .fullscreen-btn:hover {
-            background-color: #c36;
-        }
         
         @media (max-width: 768px) {
             .ui-panel {
@@ -217,7 +166,6 @@
                 <button class="speed-btn" id="normalBtn">Normal</button>
                 <button class="speed-btn" id="fastBtn">Fast</button>
                 <button id="historyBtn">History</button>
-                <button class="fullscreen-btn" id="fullscreenBtn">Large Screen</button>
             </div>
         </div>
         
@@ -227,7 +175,7 @@
     </div>
 
     <!-- フッター情報 -->
-    <div style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #333; padding: 5px; text-align: center; font-size: 12px; color: #999;">
+    <div style="background-color: #333; padding: 5px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #555;">
         <a href="privacy.html" style="color: #6cf; text-decoration: none; margin: 0 10px;">プライバシーポリシー</a>
         <span>© 2024 VisionTrainer</span>
     </div>
@@ -294,8 +242,6 @@
                 document.getElementById('normalBtn').addEventListener('click', () => this.setSpeed(1));
                 document.getElementById('fastBtn').addEventListener('click', () => this.setSpeed(2));
                 
-                // フルスクリーン
-                document.getElementById('fullscreenBtn').addEventListener('click', () => this.toggleFullscreen());
                 
                 // ヒストリー
                 document.getElementById('historyBtn').addEventListener('click', () => this.showHistory());
@@ -305,10 +251,6 @@
                     if (e.code === 'Space') {
                         e.preventDefault();
                         this.onSpace();
-                    }
-                    if (e.key === 'F11') {
-                        e.preventDefault();
-                        this.toggleFullscreen();
                     }
                 });
             }
@@ -398,12 +340,26 @@
                     this.dotPosition.x += this.dotVelocity.x;
                     this.dotPosition.y += this.dotVelocity.y;
                     
-                    // 境界チェック
+                    // 境界チェック（フッター分を考慮）
                     if (this.dotPosition.x - this.currentRadius <= 0 || this.dotPosition.x + this.currentRadius >= this.canvasSize.width) {
                         this.dotVelocity.x *= -1;
+                        // 境界内に戻す
+                        if (this.dotPosition.x - this.currentRadius <= 0) {
+                            this.dotPosition.x = this.currentRadius;
+                        }
+                        if (this.dotPosition.x + this.currentRadius >= this.canvasSize.width) {
+                            this.dotPosition.x = this.canvasSize.width - this.currentRadius;
+                        }
                     }
                     if (this.dotPosition.y - this.currentRadius <= 0 || this.dotPosition.y + this.currentRadius >= this.canvasSize.height) {
                         this.dotVelocity.y *= -1;
+                        // 境界内に戻す
+                        if (this.dotPosition.y - this.currentRadius <= 0) {
+                            this.dotPosition.y = this.currentRadius;
+                        }
+                        if (this.dotPosition.y + this.currentRadius >= this.canvasSize.height) {
+                            this.dotPosition.y = this.canvasSize.height - this.currentRadius;
+                        }
                     }
                     
                     this.positionDot();
@@ -538,32 +494,16 @@
                 localStorage.setItem('visionTrainerRecords', JSON.stringify(records));
             }
             
-            toggleFullscreen() {
-                if (!document.body.classList.contains('fullscreen')) {
-                    document.body.classList.add('fullscreen');
-                    this.updateCanvasSize();
-                } else {
-                    document.body.classList.remove('fullscreen');
-                    this.updateCanvasSize();
-                }
-            }
             
             updateCanvasSize() {
-                if (document.body.classList.contains('fullscreen')) {
-                    // ラージスクリーン時
-                    this.canvasSize.width = window.innerWidth;
-                    this.canvasSize.height = window.innerHeight;
-                    this.currentRadius = this.largeDotRadius;
-                } else {
-                    // 通常時（UIパネルを除いた全画面）
-                    this.canvasSize.width = window.innerWidth;
-                    this.canvasSize.height = window.innerHeight - 100; // UIパネル+フッター分を引く
-                    this.currentRadius = this.dotRadius;
-                }
+                // 通常時（UIパネルとフッターを除いた全画面）
+                this.canvasSize.width = window.innerWidth;
+                this.canvasSize.height = window.innerHeight - 90; // UIパネル+フッター分を引く
+                this.currentRadius = this.dotRadius;
                 
-                // 珠の位置を中央に調整
-                this.dotPosition.x = this.canvasSize.width / 2;
-                this.dotPosition.y = this.canvasSize.height / 2;
+                // 珠の位置を中央に調整（境界内に確実に配置）
+                this.dotPosition.x = Math.max(this.currentRadius, Math.min(this.canvasSize.width - this.currentRadius, this.canvasSize.width / 2));
+                this.dotPosition.y = Math.max(this.currentRadius, Math.min(this.canvasSize.height - this.currentRadius, this.canvasSize.height / 2));
                 this.positionDot();
             }
             
