@@ -15,6 +15,9 @@
                 this.dotRadius = 30;
                 this.largeDotRadius = 40;
                 this.maxReactionTime = 500;
+
+                // タッチデバイス判定
+                this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
                 
                 this.initElements();
                 this.initEventListeners();
@@ -23,7 +26,7 @@
                 const mins = Math.floor(this.counter / 60);
                 const secs = this.counter % 60;
                 this.timerEl.textContent = `Time: ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                this.resultEl.textContent = 'Spaceキーで反応してください';
+                this.resultEl.textContent = this.isTouchDevice ? '画面をタップして反応してください' : 'Spaceキーで反応してください';
                 
                 this.startDigitUpdate();
                 this.positionDot();
@@ -70,6 +73,13 @@
                         this.onSpace();
                     }
                 });
+
+                // タップ/クリック
+                if (this.isTouchDevice) {
+                    this.canvasContainer.addEventListener('touchstart', () => this.onSpace());
+                } else {
+                    this.canvasContainer.addEventListener('click', () => this.onSpace());
+                }
             }
             
             toggle() {
@@ -281,7 +291,7 @@
                 const mins = Math.floor(this.counter / 60);
                 const secs = this.counter % 60;
                 this.timerEl.textContent = `Time: ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                this.resultEl.textContent = 'Spaceキーで反応してください';
+                this.resultEl.textContent = this.isTouchDevice ? '画面をタップして反応してください' : 'Spaceキーで反応してください';
                 
                 // 珠を中央に戻す
                 this.dotPosition.x = this.canvasSize.width / 2;
